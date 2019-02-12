@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
 
-const Blogs = require("../../models/Blogmodel");
+// Require all models
+const db = require("../../models");
 
 // GET all blogs
 
 router.get("/", (req, res) => {
-  Blogs.find({})
+  db.Blogs.find({})
     .sort({ date: -1 })
     .then(dbModel => res.json(dbModel))
     .catch(err => res.status(404).json(err));
@@ -14,18 +15,18 @@ router.get("/", (req, res) => {
 
 // get a blog by id
 router.get("/:id", (req, res) => {
-  Blogs.findById({ _id: req.params.id })
+  db.Blogs.findById({ _id: req.params.id })
     .then(dbModel => res.json(dbModel))
     .catch(err => res.status(404).json(err));
 });
 
 //post a new blog and  save the blog
 router.post("/", (req, res) => {
-  const newBlog = new Blogs({
+  const newBlog = new db.Blogs({
     topic: req.body.topic,
     author: req.body.author,
-    synopsis: req.body.synopsis,
-    responses: req.body.responses
+    synopsis: req.body.synopsis
+    // responses: req.body.responses,
   });
 
   newBlog.save().then(blog => res.json(blog));
@@ -34,7 +35,7 @@ router.post("/", (req, res) => {
 // delete a blog
 
 router.delete("/:id", (req, res) => {
-  Blogs.findById(req.params.id)
+  db.Blogs.findById(req.params.id)
     .then(blog => blog.remove().then(() => res.json({ success: true })))
     .catch(err => res.status(404).json({ success: false }));
 });
@@ -42,9 +43,16 @@ router.delete("/:id", (req, res) => {
 //update a blog
 
 router.put("/:id", (req, res) => {
-  Blogs.findOneAndUpdate(
+  db.Blogs.findOneAndUpdate(
     { _id: req.params.id },
-    { $push: { responses: req.body.responses } }
+    {
+      $set: { "responses.userTime": req.body.userTime },
+      $push: {
+        "responses.responseName": req.body.responseName,
+        "responses.responseText": req.body.responseText,
+        responseDate: req.body
+      }
+    }
   )
     .then(blog => {
       console.log(blog);
